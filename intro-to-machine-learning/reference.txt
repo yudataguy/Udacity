@@ -1,0 +1,7 @@
+https://medium.com/towards-data-science/train-test-split-and-cross-validation-in-python-80b61beca4b6
+http://scikit-learn.org/stable/tutorial/basic/tutorial.html #and subsequent guide on different classifiers
+https://www.civisanalytics.com/blog/workflows-in-python-using-pipeline-and-gridsearchcv-for-more-compact-and-comprehensive-code/
+http://scikit-learn.org/stable/modules/ensemble.html#using-the-votingclassifier-with-gridsearch
+https://stackoverflow.com/questions/25147707/pandas-fillna-not-working
+https://link.springer.com/referenceworkentry/10.1007%2F978-1-4419-9863-7_233
+https://info.salford-systems.com/blog/bid/337783/Why-Data-Scientists-Split-Data-into-Train-and-Test
