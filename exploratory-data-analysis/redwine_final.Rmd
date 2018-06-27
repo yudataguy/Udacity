@@ -1,0 +1,508 @@
+#Red Wine Exploratory Data Analysis
+========================================================
+###By Siye Yu
+
+Today, I will explore the redwine dataset to find out factors which make great quality wine. Everyone may has his or her unique taste, whether its sweetness or bitterness. Let's first take a look at the dataset data summary to get an better idea before we start. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that end up using in analysis
+
+library(ggplot2)
+library(scales)
+library(memisc)
+library(lattice)
+library(MASS)
+library(car)
+library(reshape2)
+library(dplyr)
+library(tidyr)
+library(gridExtra)
+library(GGally)
+
+```
+
+```{r echo = FALSE, Load_the_Data}
+
+# Load the Data
+redwine <- read.csv("wineQualityReds.csv", header = TRUE)
+
+```
+
+```{r echo = FALSE, Short_Intro}
+
+# Obtain general information on the dataset
+str(redwine)
+summary(redwine)
+head(redwine)
+names(redwine)
+summary(redwine$quality)
+
+```
+
+# Univariate Plots Section
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots1}
+
+boxplot(redwine[, -which(names(redwine) == "X")], use.cols = TRUE)
+
+```
+
+Plot shows outlier for two columns, free.sulfur.dioxide and total.sulfur.dioxide
+
+To get a better picture, I'll create two boxplots for the columns.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots2}
+
+qplot(factor(0),total.sulfur.dioxide,data=redwine,geom='boxplot')
+qplot(factor(0),free.sulfur.dioxide,data=redwine,geom='boxplot')
+
+```
+
+Distribution of quality histogram, which shows a normal distrubtin.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots3}
+
+hist(redwine$quality, col = "green", labels = TRUE)
+
+```
+
+Histogram of count for chlorides, citric acid, residual sugar and alcohol variable to show distrubution 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots4}
+
+hist(log10(redwine$chlorides), col = "gray", labels = TRUE)
+hist(redwine$citric.acid, col = "red", labels = TRUE)
+hist(redwine$residual.sugar, col = "yellow", labels = TRUE)
+hist(log10(redwine$alcohol), col = "blue", labels = TRUE)
+
+```
+
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+it has 1599 obs. of 13 varaiables
+
+### What is/are the main feature(s) of interest in your dataset?
+whether critic.acid(freshness), sugar(sweatness), chlorides(saltyness) has any impact on the quality of wine.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+the alochol percentage may help me to answer few question since it has the medium strength of correlation on both density and quality. 
+
+### Did you create any new variables from existing variables in the dataset?
+No new variable was created
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+No, the data is already clean and easy to plot. It doesn't appear to be useful when analysing the data. 
+
+
+# Bivariate Plots Section
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots}
+
+by(redwine$alcohol, redwine$quality, mean)
+#looks like the higher alochol content, the better quality
+
+by(redwine$citric.acid, redwine$quality, mean)
+#the higher ciric.acid, the higher quality
+
+by(redwine$residual.sugar, redwine$quality, mean)
+#no particular trend
+
+by(redwine$chlorides, redwine$quality, mean)
+
+```
+
+Looks like the lower chlorides, the better quality, we will investigate further to make sure the finding
+
+Next let's look at some of the supporting variables
+
+First take a look at the fixed acidity, as the graph shows, there is almost no correlation between quality and fixed acidity 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots1}
+
+ggplot(data=redwine, aes(x = factor(quality), y = fixed.acidity)) + 
+coord_cartesian(ylim = c(4, 16)) +
+geom_jitter(alpha = 1/10, color = '#00CCFF' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'blue') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Fixed Acidity (g / cm^3)',
+     title = 'Boxplot of fixed acidity across qualities')
+
+```
+
+Graph shows volatile acidity has a negative correlation with quality.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots2}
+
+ggplot(data=redwine, aes(x = factor(quality), y = volatile.acidity)) + 
+coord_cartesian(ylim = c(0, 1.6)) +
+geom_jitter(alpha = 1/10, color = '#FF0000' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'blue') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Volatile Acidity (g / cm^3)',
+     title = 'Boxplot of volatile acidity across qualities')
+
+```
+
+Citric acid has a somewhat postitive relationship with quality, as citric acid increases, the quality also increase 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots3}
+
+ggplot(data=redwine, aes(x = factor(quality), y = citric.acid)) + 
+coord_cartesian(ylim = c(0, 1)) +
+geom_jitter(alpha = 1/10, color = '#FF66FF' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Citric Acid (g / cm^3)',
+     title = 'Boxplot of citric acid across qualities')
+
+```
+
+Now let's take a look at the sweetness factor(residual sugar), there is almost no correlation between residual sugar and quality. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots4}
+
+ggplot(data=redwine, aes(x = factor(quality), y = residual.sugar)) + 
+coord_cartesian(ylim = c(0.75, 7.5)) +
+geom_jitter(alpha = 1/10, color = '#99FF33' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Residual Sugar (g / cm^3)',
+     title = 'Boxplot of residual sugar across qualities')
+
+```
+
+What about chlorides, the graph shows a very weak negative correlation with quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots5}
+
+ggplot(data=redwine, aes(x = factor(quality), y = chlorides)) + 
+coord_cartesian(ylim = c(0, 0.3)) +
+geom_jitter(alpha = 1/10, color = '#993399' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Chlorides (g / cm^3)',
+     title = 'Boxplot of chlorides across qualities')
+
+```
+
+Free sulfur dioxide doesn't have much correlation with quality, as the graph shows, it's almost random without much effect on quality 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots6}
+
+ggplot(data=redwine, aes(x = factor(quality), y = free.sulfur.dioxide)) + 
+coord_cartesian(ylim = c(0, 60)) +
+geom_jitter(alpha = 1/10, color = '#33ffff' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Free Sulfer Dioxide (mg / cm^3)',
+     title = 'Boxplot of free sulfur dioxide across qualities')
+
+
+```
+
+Total sulfur dioxide has almost the same correlation as free sulfur dioxide with quality, can not infer any impact on quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots7}
+
+ggplot(data=redwine, aes(x = factor(quality), y = total.sulfur.dioxide)) + 
+coord_cartesian(ylim = c(0, 175)) +
+geom_jitter(alpha = 1/10, color = '#009999' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Total Sulfer Dioxide (mg / cm^3)',
+     title = 'Boxplot of total sulfur dioxide across qualities')
+
+```
+
+As the graph shows, density has a relative weak negative correlation with quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots8}
+
+ggplot(data=redwine, aes(x = factor(quality), y = density)) + 
+coord_cartesian(ylim = c(0.99, 1.005)) +
+geom_jitter(alpha = 1/10, color = '#e6e600' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Density (g / cm^3)',
+     title = 'Boxplot of density across qualities')
+
+```
+
+Last but not the least, alcohol shows somewhat promising positive correlation, which I'll invetigate further in the next section
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots9}
+
+ggplot(data=redwine, aes(x = factor(quality), y = alcohol)) + 
+coord_cartesian(ylim = c(8, 15)) +
+geom_jitter(alpha = 1/10, color = '#990000' ) + 
+geom_boxplot() + 
+stat_summary(fun.y = 'mean', geom = 'point', color = 'red') + 
+labs(x = 'Quality (score between 3 and 9)',
+     y = 'Alcohol (% by volume)',
+     title = 'Boxplot of alcohol across qualities')
+
+```
+
+Based on the graph, there does not appear to be a strong relationship between quality and total/free.sulfur.dioxide. SO2 is not evident in most of the wines, regardless of quality. 
+
+Let's take a look at the overall correlation between variables.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots10}
+
+ggcorr(redwine, palette = "RdYlGn", name = "rho", 
+       hjust = 1, label_size = 3.5, label_round = 1, 
+       label_alpha = TRUE, label = TRUE, label_color = "black")
+
+```
+
+
+```{r echo = FALSE, Correlation_Coefficient}
+
+# Obtain correlation coefficient of between different variables
+cor(redwine, method = "pearson")
+
+```
+
+> **Correlation Coefficient**: based on the correlation coefficient, only few variables has large strength of association ( > 0.5 or < -0.5).
+citric.acid - fixed.acidity
+density - fixed.acidity
+pH - fixed.acidity
+critic.acid - volatile.acidity
+pH - ctic.acid
+total.sulfur.dioxide - free.sulfur.dioxide
+Additionally, none of the variable has strong corrleation with quality, only "alcohol" comes closest at 0.47.
+
+# Bivariate Analysis
+
+> **Summary**: based on the correlation coefficient and graph, there are weak correlation between the citric.acid(freshness), residual.sugar(sweatness), chlorides(saltyness) and quality. Though the preliminary grouping results showed a possible correlation. 
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+All three variables(citric.acid, residual.sugar, cholrides) has weak or none correlation with other variables, except critic.acid and pH.  
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+There is strong correlation between fixed.acidity with density, citric.acid, and pH. This means fixed.acidity is a strong component of red wine. Although, this is kind of expected due to the acid nature. But in the same vein, citric.acid and volatile.acidity does not have strong correlation with those same variables. Based on these findings, I suspect the rating can be subjective, instead of objective. Which we will investigate further. 
+
+### What was the strongest relationship you found?
+Between fixed.acidity with density, citric.acid, and pH.
+
+# Multivariate Plots Section
+
+Critric acid does not seems to have a strong relationship with residual suger in term of quality
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots1}
+
+#Multivariate plots
+ggplot(redwine, aes(x = citric.acid, y = residual.sugar, col = factor(quality))) +
+  geom_jitter(alpha = 0.3) +
+  geom_smooth(method = "lm", col = "red") +
+  labs(x = 'Critic Acid (g / dm^3)',
+     y = 'Residual Sugar (g / dm^3)')
+
+```
+
+Also is the relationship between chlorides and residual suger
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots2}
+
+ggplot(redwine, aes(x = chlorides, y = residual.sugar, col = factor(quality))) +
+  geom_jitter(alpha = 0.3) +
+  geom_smooth(method = "lm", col = "red") +
+  labs(x = 'Chlorides (sodium chloride - g / dm^3)',
+     y = 'Residual Sugar (g / dm^3)')
+  
+```
+
+So is between citric acid and chlorides
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots3}
+
+ggplot(redwine, aes(x = citric.acid, y = chlorides, col = factor(quality))) +
+  geom_jitter(alpha = 0.3) +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  labs(x = 'Citric Acid (g / dm^3)',
+     y = 'Chlorides (sodium chloride - g / dm^3)')
+  
+```
+
+Now with quality, let's take a look at some of the variables. Hope it will clue us in.
+First stop: chlorides.
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots4}
+
+ggplot(redwine, aes(x = quality, y = chlorides, col =factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  coord_cartesian(ylim = c(0, 0.5)) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  labs(x = 'Quality (score between 3 and 9)',
+     y = 'Chlorides (sodium chloride - g / dm^3)')
+
+```
+
+But the graph is not promising, the correlation is weak and negative. 
+
+
+Also, sweetness does not seem to be a factor in term of quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots5}
+
+ggplot(redwine, aes(x = quality, y = residual.sugar, col =factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  coord_cartesian(ylim = c(0, 12)) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  labs(x = 'Quality (score between 3 and 9)',
+     y = 'Residual Sugar (g / dm^3)')
+
+```
+
+Overall chlorides has a weak negative correlation with quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots6}
+
+ggplot(redwine, aes(x = quality, y = chlorides, col =factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  coord_cartesian(ylim = c(0, 0.5)) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  labs(x = 'Quality (score between 3 and 9)',
+     y = 'Chlorides (sodium chloride - g / dm^3)')
+
+```
+
+These charts confirmed my suspicion on citric acid which does not seem to play a significant role in quality. Now let's take a look at 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots7}
+
+ggplot(redwine, aes(x = quality, y = alcohol, col = factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  labs(x = 'Quality (score between 3 and 9)',
+     y = 'Alcohol (% by volume)')
+
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+The graphs illustrated what I discovered the previous section. There are \
+weak correlation between the critic.acid, residual.sugar, and cholrides. 
+
+### Were there any interesting or surprising interactions between features?
+Nothing out of ordinary, except some outliers on many graphs.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+Due to the data's cleaness, it was fairly easy create graph and not much \
+difficulty was encontered. This may not be the same when apply to other \
+datasets. 
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+
+# Relationship between chlorides with quality of wine
+
+ggplot(redwine, aes(x = quality, y = chlorides, col = factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  ggtitle("Red Wine's chlorides in term of quality") +
+  ylim(quantile(redwine$chlorides, 0.01),quantile(redwine$chlorides, 0.95)) +
+  xlab("Quality of Red Wine (1-10)") +
+  ylab("Sodium Chloride - g / dm^3")
+
+```
+
+### Description One
+There is no significant relationship between the chloride and wine quality. Remove this varilable as a key variable responsible for wine's quality. 
+
+### Plot Two
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
+
+ggplot(redwine, aes(x = quality, y = residual.sugar, col = factor(quality))) +
+  geom_jitter(alpha = 0.2) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  theme(legend.title=element_blank()) +
+  ggtitle("Red Wine's residual sugar in term of quality") +
+  ylim(quantile(redwine$residual.sugar, 0.01),quantile(redwine$residual.sugar, 0.95)) +
+  xlab("Quality of Red Wine (1-10)") +
+  ylab("Residual Sugar (g / dm^3)")
+
+```
+
+### Description Two
+This graph also shows the lack of relationship between residual sugar and quality
+of wine. Even though in common sense, the sweetness usually is associated with the 
+quality of wine as personal taste. But the graph does not show correlation between 
+them. 
+
+### Plot Three
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Three}
+
+ggplot(redwine, aes(x = quality, y = alcohol, col = factor(quality))) +
+  geom_jitter(alpha = 0.1) +
+  geom_boxplot() +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'black') +
+  geom_smooth(method = "lm", col = "red") +
+  ggtitle("Red Wine's alcohol content in term of quality") +
+  theme(legend.title=element_blank()) +
+  ylim(quantile(redwine$alcohol, 0.01),quantile(redwine$alochol, 0.95)) +
+  xlab("Quality of Red Wine (1-10)") +
+  ylab("Alcohol (% by volume)")
+
+```
+
+### Description Three
+Critical acid has strong correlation than the previous two variables in relation
+of quality. With the data points listed on the garph, it clearly presents the image 
+that the correlation is still not strong enough. Even though people would think that 
+is one of the common criteria for wine quality. 
+
+
+------
+
+# Reflection
+
+Without break down the data, it is easy to get lost in this giant dataset and let
+conventional wisdom takes over. As I set out at the beginning, the relationship 
+among variables were totally unexpected. As I went through the whole process, it
+became more and more clear that my expectation was false. And the correlation and 
+graphs proved me wrong. In data analyasis, how to differentiate personal belief
+and data can be challenge. I need to have an empty mindset to start with. That way, 
+it will be easier to fall into the "trap". 
+
+A further investigation into the dataset can be wether correlation equal causation
+for this dataset. Even though we find some variables stronger correlation with
+quality. But was it the correct correlation, or was it by chance. 
