@@ -5,4 +5,4 @@ In this project, use R and apply exploratory data analysis techniques to explore
 
 ### Data Analysis Report: ###
 
-Read the [report]()
+Read the [report](https://github.com/yudataguy/udacity-data-analyst-nanodegree/blob/master/exploratory-data-analysis/redwine_final.pdf)
