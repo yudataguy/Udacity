@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="d3.min.js"></script>
+    <script src="topojson.js"></script>
+    <script src="d3.slider.js"></script>
+    <link rel="stylesheet" type="text/css" href="d3.slider.css">
+    <title>Japanese Regional Population Change After WW2 (5 Years Interval)</title>
+    <style>
+      
+      #tooltip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: lightsteelblue;
+        text-align: center;
+        padding: 5px;
+      }
+
+      .wrapper{
+        max-width: 90%;
+        margin: 0 auto;
+      }
+
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+        background-color: #eee;
+      }
+
+      #maintext {
+        width: 1000px;
+        margin: 25px auto 25px auto;
+        padding: 50px 50px 50px 50px;
+        background-color: white;
+        box-shadow: 0 0 20px #ccc;
+      }
+
+      h1 {
+        margin-bottom: 25px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      h4 {
+        margin-top: 30px;
+        margin-left: 20px;
+        font-size: 14px;
+      }
+
+      p {
+        margin-bottom: 25px;
+        font-size: 13px;
+        line-height: 18px;
+      }
+
+
+    </style>
+  </head>
+  <body>
+
+    <div id="maintext">
+
+      <h1>Japanese Regional Population Change After WW2 (5 Years Interval)</h1>
+      <h4>Unit: Thousands people</h4>
+      
+      <p>The graph shows the trend of Japanese population growth since WW2. As the reader moves the slider towards present days. It shows the population growth is moving into negative territory in most areas, except Tokyo and Osaka region. Also it shows a huge growth in some regions right after the war, and the urbanization of Tokyo since the end of war. For more information, please refer to README.md file.<p>
+
+
+    <div class="wrapper">
+      <div class="container"></div>
+      <div class="slider"></div>
+    </div>
+
+    <script type="text/javascript">
+
+    var japan;
+    var keys; // variable for different key(prefecture)
+    var currentKey; // variable for current selection key (year)
+    var sliderKeys = []; // year variable for sliders 
+    var w = 960;
+    var h = 760;
+    
+    // Setup canvas/container
+    var container = d3.select('.container');
+    var svg = container.append('svg')
+        .attr('width', w)
+        .attr('height', h)
+        .append("g");
+
+    var g = svg.append("g");
+
+    // Assign color to domain range
+    var color = d3.scale.linear()
+        .domain([-150, 0, 500, 1000, 1800])
+        .range(['#feebe2', '#fbb4b9', '#f768a1', '#c51b8a', '#7a0177']);
+
+    // Tooltip style
+    var tooltip = d3.select("body")
+                    .append("div")
+                    .attr("id", "tooltip")
+                    .style("opacity", 0);
+
+    // Update map color function
+    var updateMap = function() {
+      g.selectAll('path')
+        .transition()
+        .duration(1000)
+        .style('fill', function(d) {
+          return color(d.properties[currentKey]);
+        });
+    }
+
+    // Legend color
+    svg.selectAll('rect.legend')
+      .data(color.domain())
+      .enter()
+      .append('rect')
+      .attr('class', 'legend')
+      .attr('x', 65)
+      .attr('y', function(d, i) { return 100 + 20 * i; })
+      .attr('width', 20)
+      .attr('height', 20)
+      .attr('fill', function(d) { return color(d); });
+    
+    // Legend text
+    svg.selectAll('text.legend')
+      .data(color.domain())
+      .enter()
+      .append('text')
+      .attr('x', 60)
+      .attr('y', function(d, i) { return 100 + 20 * i + 12; })
+      .attr('font-size', 9)
+      .attr('text-anchor', 'end')
+      .text(function(d) { return d; });
+
+    // Read map file
+    d3.json('japan.topojson', function(error, collection) {
+      var japan = topojson.feature(collection, collection.objects.japan).features;
+
+      // Setup map
+      var projection = d3.geo.mercator()
+                         .scale(1500)
+                         .center([137, 35])
+                         .translate([w / 2, h / 2]);
+      var path = d3.geo.path().projection(projection);
+
+      g.selectAll('path')
+        .data(japan)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('prefecture', function(d) {
+          return d.properties.name;
+        })
+        .style('fill', function(d, i) {
+          return 'white';
+        })
+        .attr("stroke", "#404040")
+        .attr("stroke-width", 0.5)
+        .style('cursor', 'pointer')
+        .on('mouseover', function(d){ // Mouse over action
+          tooltip.style("opacity", 1)
+            .html(d.properties['name']+'<br/>'+d.properties[currentKey])
+            .style("left", (d3.event.pageX + 10) + "px")
+            .style("top", (d3.event.pageY - 40) + "px");
+
+        	var self = d3.select(this);
+        	self.style('fill', 'red');
+        }) 
+        .on('mousemove', function(d){
+          tooltip
+            .style("left", (d3.event.pageX + 10) + "px")
+            .style("top", (d3.event.pageY - 40) + "px");
+        }) // Return to previous color once mouse moved out of region 
+        .on('mouseout', function(d, i){
+          tooltip.style("opacity", 0);
+          
+          //Show the year's color which is selected
+        	var self = d3.select(this);
+        	self.transition()
+        	  .duration(300)
+            .style('fill', function(d, i) {
+              return color(d.properties[currentKey]);
+            });
+        });
+
+        // Read csv data 
+        d3.csv('jp_pop.csv', function(error, rows) {
+
+          // Gather data from csv
+          keys = Object.keys(rows[0]).filter(function(key){ return key !== 'prefecture'; });
+          
+          // Prepare sliderKeys for slider
+          sliderKeys = svg.selectAll('.keys')
+                          .data(keys)
+                          .enter()[0]
+                          .map(function(x) 
+                          {
+                            return x['__data__'] ;
+                          });
+   
+          var total = sliderKeys.length,
+              min = sliderKeys[0],
+              difference = sliderKeys[1] - sliderKeys[0],
+              max = sliderKeys[total-1];
+          
+          // Add a slider
+          d3.select('.slider').call(
+            d3.slider()
+              .axis(true)
+              .min(min)
+              .max(max)
+              .step(difference)
+              .on("slide", function(evt, value) {
+              currentKey = value;
+
+              d3.selectAll('.keys')
+                .classed("selected", function(){return (d3.select(this).attr('value') === currentKey)});
+              updateMap();
+            })
+          );
+
+          // Read population data for that year
+          for (var i = 0; i < rows.length; i++) {
+            var municipality = japan.filter(function(obj) {
+              return (obj.properties['name'] === rows[i]['prefecture']);
+            })[0];
+
+            if (municipality) {
+              keys.forEach(function(key){
+                municipality.properties[key] = rows[i][key];
+              });
+        		}
+          }
+
+          // Set data to the first year when first load map
+          currentKey = keys[0];
+          updateMap();
+        });
+    });
+
+    </script>
+
+ </body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <title>Japanese Population Trend After WW2</title>
+    <style>
+      #tooltip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: #f0f0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container"></div>
+
+    <script type="text/javascript">
+
+    var japan;
+    var w = 960;
+    var h = 760;
+
+    var container = d3.select('.container');
+    var svg = container.append('svg')
+        .attr('width', w)
+        .attr('height', h)
+        .append("g");
+    var g = svg.append("g");
+
+    var tooltip = d3.select("body")
+                    .append("div")
+                    .attr("id", "tooltip")
+                    .style("opacity", 0);
+
+    // Assign color to domain range
+    var color = d3.scaleLinear()
+        .domain([-200, 300, 800, 1300, 1800])
+        .range(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']);
+
+    // Legend text
+    svg.selectAll('text.legend')
+      .data(color.domain())
+      .enter()
+      .append('text')
+      .attr('x', 60)
+      .attr('y', function(d, i) { return 100 + 20 * i + 12; })
+      .attr('font-size', 9)
+      .attr('text-anchor', 'end')
+      .text(function(d) { return d; })
+      .attr('fill', function(d) { return color(d); });
+
+    // Legend color
+    svg.selectAll('rect.legend')
+      .data(color.domain())
+      .enter()
+      .append('rect')
+      .attr('class', 'legend')
+      .attr('x', 65)
+      .attr('y', function(d, i) { return 100 + 20 * i; })
+      .attr('width', 20)
+      .attr('height', 20)
+      .attr('fill', function(d) { return color(d); });
+
+
+    // Read map file
+    d3.json('japan.topojson', function(error, collection) {
+      var japan = topojson.feature(collection, collection.objects.japan).features;
+
+      var projection = d3.geoMercator()
+                         .scale(1500)
+                         .center([137, 34.5])
+                         .translate([w / 2, h / 2]);
+      var path = d3.geoPath().projection(projection);
+
+      g.selectAll('path')
+        .data(japan)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('prefecture', function(d) {
+          return d.properties.name;
+        })
+        .style('fill', function(d, i) {
+          return 'pink';
+        })
+        .attr("stroke", "#404040")
+        .attr("stroke-width", 1)
+        .style('cursor', 'pointer')
+        .on('mouseover', function(d){ // Create mouseover action - change color
+          tooltip.style("opacity", 0.7)
+            .html(d.properties['name'])
+            .style("left", (d3.event.pageX + 10) + "px")
+            .style("top", (d3.event.pageY - 40) + "px");
+
+        	var self = d3.select(this);
+        	self.style('fill', 'red');
+        })
+        .on('mousemove', function(d){ 
+          tooltip
+            .style("left", (d3.event.pageX + 10) + "px")
+            .style("top", (d3.event.pageY - 40) + "px");
+        })
+        .on('mouseout', function(d, i){ // Create mouseout action - return to original color
+          tooltip.style("opacity", 0);
+
+          var self = d3.select(this);
+          self.style('fill', 'pink')
+
+        	
+        });
+
+      });
+
+    </script>
+
+ </body>
+</html>
