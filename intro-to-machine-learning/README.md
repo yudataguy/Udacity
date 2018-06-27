@@ -6,7 +6,7 @@ Use data to play detective, and put your machine learning skills to use by build
 
 ### Machine Learning Analysis Report: ###
 
-Read the [report]()
+Read the [report](https://github.com/yudataguy/udacity-data-analyst-nanodegree/blob/master/intro-to-machine-learning/Enron%20Submission.pdf)
 
 ### Citation: ###
 * Train/Test Split and Cross Validation in Python: https://medium.com/towards-data-science/train-test-split-and-cross-validation-in-python-80b61beca4b6
