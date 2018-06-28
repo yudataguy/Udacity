@@ -56,3 +56,11 @@ Many thanks to StackOverflow community for answering my questions on this projec
 
 * Simple d3.js Tooltips - http://bl.ocks.org/d3noob/a22c42db65eb00d4e369
 
+### Visualization ###
+
+[Data Visualization](https://bl.ocks.org/yudataguy/2910dbc93860fd853a524c605e3d2baa)
+
+![Screenshot](screenshot.png)
+
+[Local files](d3_jp.zip) - If online display is not working, please download the file and display in local http environment.
+
